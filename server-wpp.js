@@ -46,9 +46,9 @@ const __dirname = path.dirname(__filename);
 const myTokenStore = new wppconnect.tokenStore.MemoryTokenStore();
 
 // ============================================================
-// Pairing Web Server (SSE) — port PORT_WEB (default 80)
+// Pairing Web Server (SSE) — port PORT_WEB (default 8081)
 // ============================================================
-const PORT_WEB = process.env.PORT_WEB || 80;
+const PORT_WEB = process.env.PORT_WEB || 8081;
 const sseClients = [];
 
 /**
