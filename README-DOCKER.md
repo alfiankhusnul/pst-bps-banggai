@@ -41,13 +41,13 @@ docker run -d \
   -e GEMINI_API_KEY=your_api_key_here \
   -e PEGAWAI_NUMBER='["6281234567890"]' \
   -v $(pwd)/tokens:/app/tokens \
-  -p 8080:80 \
+  -p 8081:80 \
   pst-bps-banggai
 ```
 
 ### 3. Login WhatsApp
 
-Buka **http://localhost:8080** di browser → scan QR Code dengan WhatsApp di HP → selesai!
+Buka **http://localhost:8081** di browser → scan QR Code dengan WhatsApp di HP → selesai!
 
 ---
 
@@ -100,11 +100,11 @@ docker run -d --name astabot \
   -e GEMINI_API_KEY=your_key \
   -e PEGAWAI_NUMBER='["6281234567890"]' \
   -v $(pwd)/tokens:/app/tokens \
-  -p 8080:80 \
+  -p 8081:80 \
   pst-bps-banggai
 ```
 
-1. Buka `http://localhost:8080`
+1. Buka `http://localhost:8081`
 2. Buka WhatsApp di HP → **Setelan → Perangkat Tertaut → Tautkan Perangkat**
 3. **Scan QR Code** yang tampil di halaman web
 4. QR Code akan refresh otomatis jika kadaluarsa
@@ -119,11 +119,11 @@ docker run -d --name astabot \
   -e GEMINI_API_KEY=your_key \
   -e PEGAWAI_NUMBER='["6281234567890"]' \
   -v $(pwd)/tokens:/app/tokens \
-  -p 8080:80 \
+  -p 8081:80 \
   pst-bps-banggai
 ```
 
-1. Buka `http://localhost:8080`
+1. Buka `http://localhost:8081`
 2. Buka WhatsApp di HP → **Setelan → Perangkat Tertaut → Tautkan dengan nomor telepon**
 3. **Masukkan kode** yang tampil di halaman web
 
@@ -145,8 +145,8 @@ Halaman web sederhana untuk menampilkan QR Code / Link Code secara real-time.
 Port default dalam container adalah `80`. Mapping ke port host yang tersedia:
 
 ```bash
--p 8080:80     # akses di http://localhost:8080
--p 8081:80     # atau port lain jika 8080 sudah terpakai
+-p 8081:80     # akses di http://localhost:8081
+-p 8080:80     # atau port lain jika 8081 sudah terpakai
 -p 9090:80     # bebas port apapun
 ```
 
@@ -207,7 +207,7 @@ docker run -d --name astabot \
   -e GEMINI_API_KEY=your_key \
   -e PEGAWAI_NUMBER='["6281234567890"]' \
   -v $(pwd)/tokens:/app/tokens \
-  -p 8080:80 \
+  -p 8081:80 \
   pst-bps-banggai
 ```
 
@@ -219,7 +219,7 @@ docker run -d --name astabot \
 
 - Pastikan container sudah running: `docker ps`
 - Cek logs: `docker logs -f astabot`
-- Pastikan port mapping benar: `-p 8080:80`
+- Pastikan port mapping benar: `-p 8081:80`
 
 ### Container crash / restart terus
 
@@ -230,7 +230,7 @@ docker logs astabot --tail 50
 Kemungkinan penyebab:
 - `GEMINI_API_KEY` tidak di-set atau salah
 - `PEGAWAI_NUMBER` format salah (harus JSON array: `'["62xxx"]'`)
-- Port konflik (ganti port host: `-p 8081:80`)
+- Port konflik (ganti port host: `-p 9090:80`)
 
 ### Sesi WhatsApp hilang setelah restart
 

@@ -68,14 +68,14 @@ COPY . .
 # ------- Default environment variables -------
 ENV PORT_NODE=3000
 ENV PORT_PY=5000
-ENV PORT_WEB=8081
+ENV PORT_WEB=80
 ENV BOT_NAME=ASTA
 ENV BOT_NUMBER=
 
 # ------- Expose ports -------
-# Port 8081: Pairing web page (QR Code / Link Code)
+# Port 80: Pairing web page (QR Code / Link Code)
 # Port 3000 & 5000 tidak perlu di-expose (komunikasi internal dalam container)
-EXPOSE 8081
+EXPOSE 80
 
 # ------- Entrypoint -------
 COPY start.sh /app/start.sh
