@@ -55,7 +55,7 @@ Buka **http://localhost:8081** di browser → scan QR Code dengan WhatsApp di HP
 
 | Variable | Deskripsi | Default | Wajib |
 |---|---|---|---|
-| `GEMINI_API_KEY` | API key Google Gemini AI | — | ✅ |
+| `GEMINI_API_KEY` | API key Google Gemini AI | — | |
 | `PEGAWAI_NUMBER` | Daftar nomor pegawai, format JSON array | — | ✅ |
 | `BOT_NAME` | Nama sesi bot (nama tampilan) | `ASTA` | |
 | `BOT_NUMBER` | Nomor WhatsApp bot. Kosong = QR Code, isi = Link Code | _(kosong)_ | |

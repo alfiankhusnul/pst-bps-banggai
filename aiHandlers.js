@@ -128,8 +128,8 @@ import axios from "axios";
 export async function handleGeminiResponse(userMessage) {
   const { GEMINI_API_KEY } = process.env;
   if (!GEMINI_API_KEY) {
-    console.error("GEMINI_API_KEY is not set.");
-    return "Configuration error: GEMINI_API_KEY is not set.";
+    console.warn("GEMINI_API_KEY is not set. AI features are disabled.");
+    return "Maaf, fitur asisten AI saat ini sedang tidak aktif.";
   }
 
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);

@@ -9,14 +9,26 @@ app = Flask(__name__)
 
 # Inisialisasi database saat server dimulai
 json_file = 'parsed_data_v1.json'
-db = create_chroma_db_from_json(json_file, "data_pdf")
+db = None
+
+if os.getenv("GEMINI_API_KEY"):
+    try:
+        db = create_chroma_db_from_json(json_file, "data_pdf")
+        print("AI Database Initialized.")
+    except Exception as e:
+        print(f"Error initializing AI Database: {e}")
+else:
+    print("AI features disabled: GEMINI_API_KEY not found.")
 
 @app.route("/", methods=["GET"])
 def health_check():
-    return jsonify({"status": "ok"}), 200
+    return jsonify({"status": "ok", "ai_enabled": db is not None}), 200
 
 @app.route("/get_prompt", methods=["POST"])
-def get_answer():    
+def get_answer():
+    if db is None:
+        return jsonify({"answer": "AI integration disabled due to missing configuration."}), 503
+    
     try:
         data = request.json
         query = data.get('query', '')  # Ambil query dari JSON, default ke string kosong jika tidak ada

@@ -347,7 +347,7 @@ async function start(client) {
           responseText = MENU_STRUCTURE[SESSION_STATUS[userPhoneNumber].optionSession].message + BACK_TO_MENU;
         }
       } else {
-        responseText = WRONG_COMMAND + HOME_MESSAGE + FOOTER;
+        responseText = WRONG_COMMAND + MENU_STRUCTURE["0"].message;
         SESSION_STATUS[userPhoneNumber] = {
           ...SESSION_STATUS[userPhoneNumber],
           client,
