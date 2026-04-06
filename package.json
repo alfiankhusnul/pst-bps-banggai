@@ -20,7 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@google/genai": "^1.0.0",
-    "@wppconnect-team/wppconnect": "*",
+    "@wppconnect-team/wppconnect": "^1.41.1",
     "axios": "^1.7.2",
     "compromise": "13.1.1",
     "concurrently": "^8.2.2",
