@@ -19,7 +19,7 @@
   "author": "WhatsApp Team",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.16.0",
+    "@google/genai": "^1.0.0",
     "@wppconnect-team/wppconnect": "*",
     "axios": "^1.7.2",
     "compromise": "13.1.1",

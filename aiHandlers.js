@@ -1,5 +1,4 @@
-// gemini.js
-import { GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 // import fs from 'fs';
 // import natural from 'natural';
 import { BACK_TO_MENU, DISCLAIMER_AI } from "./const.js";
@@ -132,30 +131,26 @@ export async function handleGeminiResponse(userMessage) {
     return "Maaf, fitur asisten AI saat ini sedang tidak aktif.";
   }
 
-  const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-
-  // Manually create a fetch function for the generative model
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    safetySettings: [
-      {
-        category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-        threshold: HarmBlockThreshold.BLOCK_ONLY_HIGH,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_HIGH,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_HIGH,
-      },
-      {
-        category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-        threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_HIGH,
-      }
-    ],
-  });
+  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+  
+  const safetySettings = [
+    {
+      category: "HARM_CATEGORY_HARASSMENT",
+      threshold: "BLOCK_ONLY_HIGH",
+    },
+    {
+      category: "HARM_CATEGORY_HATE_SPEECH",
+      threshold: "BLOCK_MEDIUM_AND_ABOVE",
+    },
+    {
+      category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+      threshold: "BLOCK_MEDIUM_AND_ABOVE",
+    },
+    {
+      category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+      threshold: "BLOCK_MEDIUM_AND_ABOVE",
+    }
+  ];
   
   try {
     const PORT_PY = process.env.PORT_PY || 5000;
@@ -175,8 +170,12 @@ export async function handleGeminiResponse(userMessage) {
     let geminiResponse = "";
 
     try {
-      const result = await model.generateContent(data.prompt);
-      geminiResponse = result.response.text();
+      const result = await ai.models.generateContent({
+        model: "gemini-1.5-flash",
+        contents: data.prompt,
+        config: { safetySettings }
+      });
+      geminiResponse = result.text;
       return `${geminiResponse}${DISCLAIMER_AI}`;
     } catch (error) {
       console.error("Error generating Gemini response:",error.response);

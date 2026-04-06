@@ -101,6 +101,8 @@ export const getHomeMessage = () => {
   return message;
 };
 
+export const HOME_MESSAGE = getHomeMessage();
+
 // cat 1 == Sosial dan Kependudukan, cat 2 Ekonomi dan Perdagangan, cat 3 Pertanian dan Pertambangan
 export const statisticData = [
   { cat: 1, id: 519, value: "Kependudukan dan Migrasi" },

@@ -1,5 +1,5 @@
 PyMuPDF
-google-generativeai
+google-genai
 chromadb
 scikit-learn
 nltk
