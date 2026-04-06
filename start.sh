@@ -29,6 +29,11 @@ done
 echo "[START] Python server is ready!"
 
 # ---- Start Node.js server in the foreground ----
+echo "[START] Membersihkan sisa lock Profile Chromium sebelumnya..."
+# Hapus symlink SingletonLock dan SingletonCookie yang tertinggal di folder tokens
+find tokens/ -name "SingletonLock" -type l -delete 2>/dev/null || true
+find tokens/ -name "SingletonCookie" -type l -delete 2>/dev/null || true
+
 echo "[START] Launching Node.js server on port ${PORT_NODE:-3000}..."
 node server-wpp.js &
 NODE_PID=$!
