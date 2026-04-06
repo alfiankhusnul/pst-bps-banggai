@@ -35,7 +35,7 @@ export const OPTION_FOUR = `Tunggu beberapa saat, kami sedang menghubungi pegawa
 export const NOT_IN_WORKING_HOURS = `Maaf, Admin hanya menjawab di Jam Kerja:
 🗓 Senin–Kamis: 08.00 – 15.30 WITA
 🗓 Jumat: 08.00 – 16.00 WITA`;
-export const VALID_OPTIONS = Array.from({ length: 5 }, (_, i) => (i + 1).toString());
+export const VALID_OPTIONS = ["1", "2", "3", "4", "5", "6"];
 
 export const { WEBHOOK_VERIFY_TOKEN, GRAPH_API_TOKEN, PORT_NODE, PORT_PY, BOT_NUMBER, BOT_NAME, PEGAWAI_NUMBER } = process.env;
 
@@ -85,13 +85,21 @@ export const BOT_ERROR = `Maaf, bot sedang bermasalah. Kami sedang berupaya seba
 //     1. Publikasi
 //     2. Tabel Statistik
 //     `;
-export const HOME_MESSAGE = `${WELCOME_MESSAGE}
+export const getHomeMessage = () => {
+  const hasAI = !!process.env.GEMINI_API_KEY;
+  let message = `${WELCOME_MESSAGE}
     1. Perpustakaan (Tabel/Publikasi/BRS/dll)
     2. Konsultasi Statistik
     3. Penjualan Produk Statistik
     4. Rekomendasi Statistik
-    5. Layanan Pengaduan
-    `;
+    5. Layanan Pengaduan`;
+  
+  if (hasAI) {
+    message += `\n    6. Tanya AI (Beta)`;
+  }
+  
+  return message;
+};
 
 // cat 1 == Sosial dan Kependudukan, cat 2 Ekonomi dan Perdagangan, cat 3 Pertanian dan Pertambangan
 export const statisticData = [
@@ -232,6 +240,14 @@ Apabila pertanyaan diajukan di luar jam layanan, akan dibalas pada hari/jam kerj
       `,
       options: [],
     },
+    6: {
+      message: `🤖 *TANYA AI (BETA)*
+      Silakan kirimkan pertanyaan Anda terkait statistik. 
+      AI kami akan mencoba menjawab berdasarkan data yang tersedia.
+      
+      *Catatan*: Jawaban dihasilkan secara otomatis oleh AI Gemini.`,
+      options: [],
+    },
   };
 
   // Build top level categories
@@ -299,5 +315,24 @@ function buildMenuStructure(config) {
   return structure;
 }
 
-const MENU_CONFIG = buildMenuFromData(statisticData);
-export const MENU_STRUCTURE = buildMenuStructure(MENU_CONFIG);
+function getDynamicMenu(statisticData) {
+  const menuConfig = buildMenuFromData(statisticData);
+  const homeMessage = getHomeMessage();
+  const hasAI = !!process.env.GEMINI_API_KEY;
+
+  const homeOptions = ["Perpustakaan", "Konsultasi Statistik", "Penjualan Produk Statistik", "Rekomendasi Statistik", "Layanan Pengaduan"];
+  if (hasAI) {
+    homeOptions.push("Tanya AI (Beta)");
+  }
+
+  menuConfig[0] = { 
+    message: homeMessage + FOOTER, 
+    options: homeOptions 
+  };
+
+  return buildMenuStructure(menuConfig);
+}
+
+export const MENU_STRUCTURE_DYNAMIC = () => getDynamicMenu(statisticData);
+// For backward compatibility if needed, but we should use dynamic one
+export const MENU_STRUCTURE = getDynamicMenu(statisticData);

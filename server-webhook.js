@@ -394,7 +394,7 @@ APP.post("/webhook", async (req, res) => {
       return
     }
     SESSION_STATUS[userPhoneNumber] = { lastActive: Date.now(), optionSession: "0", businessPhoneNumberId: businessPhoneNumberId };
-    await sendWhatsAppMessage(businessPhoneNumberId, userPhoneNumber, HOME_MESSAGE);
+    await sendWhatsAppMessage(businessPhoneNumberId, userPhoneNumber, MENU_STRUCTURE["0"].message);
     res.sendStatus(200);
     return;
   }
@@ -413,13 +413,13 @@ APP.post("/webhook", async (req, res) => {
         optionSession: "0",
         businessPhoneNumberId: businessPhoneNumberId
       };
-      responseText = HOME_MESSAGE;
+      responseText = MENU_STRUCTURE["0"].message;
     } 
     // Handle messages based on the current session option
     else if (optionSession && optionSession != "0") {
       if (optionSession === "1") {
         responseText = await handleStatBoy(userMessage);
-      } else if (optionSession === "3") {
+      } else if (optionSession === "6") {
         responseText = await handleGeminiResponse(userMessage);
       } else if (optionSession === "4") {
         await sendMessageToPegawai(businessPhoneNumberId, SESSION_STATUS[userPhoneNumber].pegawaiPhoneNumber, userMessage, userPhoneNumber);
@@ -432,7 +432,7 @@ APP.post("/webhook", async (req, res) => {
       SESSION_STATUS[userPhoneNumber].optionSession = userMessage;
       if (userMessage === "1") {
         responseText = OPTION_ONE + BACK_TO_MENU;
-      } else if (userMessage === "3") {
+      } else if (userMessage === "6") {
         responseText = OPTION_AI + BACK_TO_MENU;
       } else if (userMessage === "4") {
         responseText = OPTION_FOUR + BACK_TO_MENU;
@@ -441,7 +441,7 @@ APP.post("/webhook", async (req, res) => {
     } 
     // Handle invalid commands
     else {
-      responseText = WRONG_COMMAND + HOME_MESSAGE;
+      responseText = WRONG_COMMAND + MENU_STRUCTURE["0"].message;
       SESSION_STATUS[userPhoneNumber] = {
         ...SESSION_STATUS[userPhoneNumber],
         lastActive: Date.now(),
