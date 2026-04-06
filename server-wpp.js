@@ -50,6 +50,9 @@ const myTokenStore = new wppconnect.tokenStore.MemoryTokenStore();
 // ============================================================
 const PORT_WEB = process.env.PORT_WEB || 80;
 const sseClients = [];
+let isWppConnected = false;
+let lastQR = "";
+let lastLinkCode = "";
 
 /**
  * Broadcast sebuah SSE event ke semua client yang terhubung.
@@ -83,7 +86,18 @@ const webServer = http.createServer((req, res) => {
       "Connection": "keep-alive",
       "Access-Control-Allow-Origin": "*",
     });
-    res.write(`event: status\ndata: waiting\n\n`);
+
+    if (isWppConnected) {
+      res.write(`event: status\ndata: connected\n\n`);
+      res.write(`event: connected\ndata: true\n\n`);
+    } else if (useLinkCode && lastLinkCode) {
+      res.write(`event: linkcode\ndata: ${lastLinkCode}\n\n`);
+    } else if (!useLinkCode && lastQR) {
+      res.write(`event: qr\ndata: ${lastQR}\n\n`);
+    } else {
+      res.write(`event: status\ndata: waiting\n\n`);
+    }
+
     sseClients.push(res);
 
     req.on("close", () => {
@@ -177,6 +191,7 @@ if (useLinkCode) {
   console.log(`[AUTH] Mode: Link Code (BOT_NUMBER=${BOT_NUMBER})`);
   wppConfig.phoneNumber = BOT_NUMBER;
   wppConfig.catchLinkCode = (code) => {
+    lastLinkCode = code;
     console.log(`[AUTH] Link Code: ${code}`);
     broadcastSSE("linkcode", code);
   };
@@ -184,6 +199,7 @@ if (useLinkCode) {
   // Mode QR Code (default)
   console.log("[AUTH] Mode: QR Code (BOT_NUMBER tidak di-set)");
   wppConfig.catchQR = (base64Qr, asciiQR, attempts) => {
+    lastQR = base64Qr;
     console.log(`[AUTH] QR Code generated (attempt ${attempts})`);
     broadcastSSE("qr", base64Qr);
   };
@@ -193,6 +209,10 @@ wppconnect
   .create(wppConfig)
   .then((client) => {
     console.log("[WPP] Client connected and running!");
+    isWppConnected = true;
+    lastQR = "";
+    lastLinkCode = "";
+    broadcastSSE("status", "connected");
     broadcastSSE("connected", "true");
     start(client);
   })
