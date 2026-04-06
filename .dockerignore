@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Environment (passed via docker run -e or --env-file)
+.env
+
+# WhatsApp session (mounted as volume)
+tokens/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Documentation
+*.md
+flow.txt
+
+# Docker files (no need inside the image)
+.dockerignore
+Dockerfile

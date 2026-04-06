@@ -1,0 +1,2 @@
+# Paksa LF untuk shell scripts (hindari CRLF di Windows)
+*.sh text eol=lf

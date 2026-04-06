@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Pairing — AstaBot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0b141a;
+      color: #e9edef;
+    }
+
+    .card {
+      background: #1f2c34;
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+
+    .card h1 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #e9edef;
+    }
+
+    .card .subtitle {
+      font-size: 13px;
+      color: #8696a0;
+      margin-bottom: 28px;
+    }
+
+    /* --- QR Code --- */
+    #qr-container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    #qr-container img {
+      width: 264px;
+      height: 264px;
+      display: block;
+    }
+
+    /* --- Link Code --- */
+    #code-container {
+      display: none;
+      margin-bottom: 20px;
+    }
+
+    #code-container .code {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      font-family: 'Courier New', monospace;
+      color: #00a884;
+      background: rgba(0,168,132,.1);
+      border: 2px dashed #00a884;
+      border-radius: 12px;
+      padding: 18px 24px;
+      display: inline-block;
+    }
+
+    /* --- Status badges --- */
+    .status {
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .status.waiting {
+      background: rgba(255,193,7,.12);
+      color: #ffc107;
+    }
+
+    .status.connected {
+      background: rgba(0,168,132,.12);
+      color: #00a884;
+    }
+
+    .status .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    .status.waiting .dot { background: #ffc107; }
+    .status.connected .dot { background: #00a884; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #8696a0;
+      line-height: 1.6;
+      margin-top: 8px;
+    }
+
+    .mode-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8696a0;
+      margin-bottom: 12px;
+    }
+
+    /* --- Connected state --- */
+    .connected-icon {
+      display: none;
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>AstaBot — WhatsApp Pairing</h1>
+    <p class="subtitle">BPS Kabupaten Banggai</p>
+
+    <div id="status" class="status waiting">
+      <span class="dot"></span>
+      <span id="status-text">Menunggu kode...</span>
+    </div>
+
+    <div id="mode-label" class="mode-label"></div>
+
+    <!-- QR Code mode -->
+    <div id="qr-container">
+      <img id="qr-img" src="" alt="QR Code">
+    </div>
+
+    <!-- Link Code mode -->
+    <div id="code-container">
+      <div id="link-code" class="code">--------</div>
+    </div>
+
+    <!-- Connected state -->
+    <div id="connected-icon" class="connected-icon">✅</div>
+
+    <p id="hint" class="hint">
+      Buka WhatsApp di HP → Setelan → Perangkat Tertaut → Tautkan Perangkat → Scan QR Code
+    </p>
+  </div>
+
+  <script>
+    const qrContainer   = document.getElementById('qr-container');
+    const qrImg         = document.getElementById('qr-img');
+    const codeContainer = document.getElementById('code-container');
+    const linkCode      = document.getElementById('link-code');
+    const connectedIcon = document.getElementById('connected-icon');
+    const statusEl      = document.getElementById('status');
+    const statusText    = document.getElementById('status-text');
+    const modeLabel     = document.getElementById('mode-label');
+    const hint          = document.getElementById('hint');
+
+    function showQR(base64) {
+      qrContainer.style.display = 'inline-block';
+      codeContainer.style.display = 'none';
+      connectedIcon.style.display = 'none';
+      qrImg.src = base64;
+      modeLabel.textContent = 'Mode: QR Code';
+      statusEl.className = 'status waiting';
+      statusText.textContent = 'Scan QR dengan WhatsApp';
+      hint.textContent = 'Buka WhatsApp di HP → Setelan → Perangkat Tertaut → Tautkan Perangkat → Scan QR Code';
+    }
+
+    function showLinkCode(code) {
+      qrContainer.style.display = 'none';
+      codeContainer.style.display = 'block';
+      connectedIcon.style.display = 'none';
+      linkCode.textContent = code;
+      modeLabel.textContent = 'Mode: Link Code';
+      statusEl.className = 'status waiting';
+      statusText.textContent = 'Masukkan kode di WhatsApp';
+      hint.textContent = 'Buka WhatsApp di HP → Setelan → Perangkat Tertaut → Tautkan dengan nomor telepon → Masukkan kode di atas';
+    }
+
+    function showConnected() {
+      qrContainer.style.display = 'none';
+      codeContainer.style.display = 'none';
+      connectedIcon.style.display = 'block';
+      modeLabel.textContent = '';
+      statusEl.className = 'status connected';
+      statusText.textContent = 'Sesi tersimpan ✓';
+      hint.textContent = 'Bot WhatsApp sudah terhubung dan berjalan.';
+    }
+
+    // --- SSE Connection ---
+    function connect() {
+      const evtSource = new EventSource('/events');
+
+      evtSource.addEventListener('qr', (e) => {
+        showQR(e.data);
+      });
+
+      evtSource.addEventListener('linkcode', (e) => {
+        showLinkCode(e.data);
+      });
+
+      evtSource.addEventListener('connected', () => {
+        showConnected();
+      });
+
+      evtSource.addEventListener('status', (e) => {
+        const data = e.data;
+        if (data === 'connected') {
+          showConnected();
+        }
+      });
+
+      evtSource.onerror = () => {
+        evtSource.close();
+        statusText.textContent = 'Koneksi terputus, reconnecting...';
+        setTimeout(connect, 3000);
+      };
+    }
+
+    connect();
+  </script>
+</body>
+</html>

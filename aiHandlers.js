@@ -158,8 +158,8 @@ export async function handleGeminiResponse(userMessage) {
   });
   
   try {
-    // change based on python url either local or public url
-    const response = await axios.post('your-py-url/get_prompt', {
+    const PORT_PY = process.env.PORT_PY || 5000;
+    const response = await axios.post(`http://localhost:${PORT_PY}/get_prompt`, {
       query: userMessage
     }, {
       headers: {

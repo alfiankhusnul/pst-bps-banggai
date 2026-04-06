@@ -11,6 +11,10 @@ app = Flask(__name__)
 json_file = 'parsed_data_v1.json'
 db = create_chroma_db_from_json(json_file, "data_pdf")
 
+@app.route("/", methods=["GET"])
+def health_check():
+    return jsonify({"status": "ok"}), 200
+
 @app.route("/get_prompt", methods=["POST"])
 def get_answer():    
     try:
@@ -34,6 +38,6 @@ def get_answer():
 
 if __name__ == "__main__":
     host = '0.0.0.0'
-    port =os.getenv('PORT_PY')
-    app.run(host=host,debug=True)
-    print("Python Server Runnig on Port : ", port)
+    port = int(os.getenv('PORT_PY', 5000))
+    print(f"Python Server Starting on Port: {port}")
+    app.run(host=host, port=port, debug=False)

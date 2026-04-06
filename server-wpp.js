@@ -15,6 +15,10 @@
  * along with WPPConnect.  If not, see <https://www.gnu.org/licenses/>.
  */
 import wppconnect from "@wppconnect-team/wppconnect";
+import http from "http";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import {
   HOME_MESSAGE,
   WRONG_COMMAND,
@@ -36,25 +40,73 @@ import {
   PORT_NODE,
 } from "./const.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const myTokenStore = new wppconnect.tokenStore.MemoryTokenStore();
+
+// ============================================================
+// Pairing Web Server (SSE) — port PORT_WEB (default 80)
+// ============================================================
+const PORT_WEB = process.env.PORT_WEB || 80;
+const sseClients = [];
+
+/**
+ * Broadcast sebuah SSE event ke semua client yang terhubung.
+ * @param {string} event - Nama event (qr, linkcode, connected, status)
+ * @param {string} data - Data yang dikirim
+ */
+function broadcastSSE(event, data) {
+  sseClients.forEach((res) => {
+    res.write(`event: ${event}\ndata: ${data}\n\n`);
+  });
+}
+
+const webServer = http.createServer((req, res) => {
+  if (req.url === "/" || req.url === "/index.html") {
+    // Serve pairing.html
+    const filePath = path.join(__dirname, "pairing.html");
+    fs.readFile(filePath, (err, content) => {
+      if (err) {
+        res.writeHead(500);
+        res.end("Error loading pairing page");
+        return;
+      }
+      res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(content);
+    });
+  } else if (req.url === "/events") {
+    // SSE endpoint
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+    });
+    res.write(`event: status\ndata: waiting\n\n`);
+    sseClients.push(res);
+
+    req.on("close", () => {
+      const idx = sseClients.indexOf(res);
+      if (idx !== -1) sseClients.splice(idx, 1);
+    });
+  } else {
+    res.writeHead(404);
+    res.end("Not found");
+  }
+});
+
+webServer.listen(PORT_WEB, () => {
+  console.log(`[WEB] Pairing page: http://localhost:${PORT_WEB}`);
+});
+
+// ============================================================
+// Session Expiration
+// ============================================================
 
 /**
  * Menangani kedaluwarsa sesi untuk penerima tertentu.
- * Menghapus status sesi dari objek SESSION_STATUS dan mengirim pesan pemberitahuan sesi kedaluwarsa melalui WhatsApp.
- *
- * @async
- * @function
- * @name handleSessionExpiration
- *
- * @param {string} business_phone_number_id - ID nomor telepon bisnis yang digunakan untuk mengirim pesan.
- * @param {string} recipient - Penerima yang sesi-nya telah berakhir.
- *
- * @example
- * handleSessionExpiration('123456789', 'recipient123');
- *
- * @returns {Promise<void>}
  */
-
 async function handleSessionExpiration(client, recipient) {
   const session = SESSION_STATUS[recipient];
   if (!session) return;
@@ -70,7 +122,7 @@ async function handleSessionExpiration(client, recipient) {
         client,
         waitingForPegawai: true,
         optionSession: "2",
-        lastActive: Date.now(), // reset supaya tungygu lagi 5 menit
+        lastActive: Date.now(), // reset supaya tunggu lagi 5 menit
       };
       return;
     }
@@ -87,17 +139,7 @@ async function handleSessionExpiration(client, recipient) {
 }
 
 /**
- * Memeriksa kedaluwarsa sesi untuk setiap penerima dalam objek SESSION_STATUS.
- * Jika sesi telah tidak aktif selama lebih dari 5 menit (300000 ms), sesi akan dianggap kedaluwarsa dan
- * fungsi handleSessionExpiration akan dipanggil untuk menangani kedaluwarsa sesi tersebut.
- *
- * @function
- * @name checkSessionExpiration
- *
- * @example
- * checkSessionExpiration();
- *
- * @returns {void}
+ * Memeriksa kedaluwarsa sesi setiap 60 detik.
  */
 function checkSessionExpiration() {
   const currentTime = Date.now();
@@ -110,44 +152,52 @@ function checkSessionExpiration() {
   }
 }
 
-/**
- * Memanggil fungsi checkSessionExpiration setiap 60 detik (60000 ms) untuk memeriksa dan menangani
- * kedaluwarsa sesi secara berkala.
- *
- * @example
- * setInterval(checkSessionExpiration, 60000);
- *
- * @returns {void}
- */
 setInterval(checkSessionExpiration, 60000);
 
-const serverOnlineTime = Date.now() / 1000; // Current timestamp in milliseconds
+const serverOnlineTime = Date.now() / 1000;
 
-// create client wpp
+// ============================================================
+// WPPConnect — mendukung QR Code (default) & Link Code
+// ============================================================
+const useLinkCode = BOT_NUMBER && BOT_NUMBER.trim() !== "";
+
+const wppConfig = {
+  session: BOT_NAME,
+  tokenStore: myTokenStore,
+  deviceSyncTimeout: 0,
+  autoClose: false,
+  protocolTimeout: 120000,
+  puppeteerOptions: {
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  },
+};
+
+if (useLinkCode) {
+  // Mode Link Code — gunakan phoneNumber
+  console.log(`[AUTH] Mode: Link Code (BOT_NUMBER=${BOT_NUMBER})`);
+  wppConfig.phoneNumber = BOT_NUMBER;
+  wppConfig.catchLinkCode = (code) => {
+    console.log(`[AUTH] Link Code: ${code}`);
+    broadcastSSE("linkcode", code);
+  };
+} else {
+  // Mode QR Code (default)
+  console.log("[AUTH] Mode: QR Code (BOT_NUMBER tidak di-set)");
+  wppConfig.catchQR = (base64Qr, asciiQR, attempts) => {
+    console.log(`[AUTH] QR Code generated (attempt ${attempts})`);
+    broadcastSSE("qr", base64Qr);
+  };
+}
+
 wppconnect
-  .create({
-    session: BOT_NAME,
-    tokenStore: myTokenStore,
-    deviceSyncTimeout: 0,
-    autoClose: false, // set waktu auto stop kode pairing
-    phoneNumber: BOT_NUMBER,
-    catchLinkCode: (str) => {
-      console.error("Code: " + str);
-      // Tambahkan lebih banyak kode log jika perlu
-    },
-    protocolTimeout: 120000, // set waktu timeout dari proses komunikasi
-    puppeteerOptions: {
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      // Tambahkan opsi puppeteer lain di sini jika diperlukan
-    },
-  })
+  .create(wppConfig)
   .then((client) => {
-    // Tambahkan kode yang berhubungan dengan client di sini
-    console.error("Client Running...");
+    console.log("[WPP] Client connected and running!");
+    broadcastSSE("connected", "true");
     start(client);
   })
   .catch((error) => {
-    console.error("Error:", error);
+    console.error("[WPP] Error:", error);
   });
 
 async function start(client) {
