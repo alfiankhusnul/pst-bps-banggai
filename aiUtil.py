@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from chromadb import Documents, EmbeddingFunction, Embeddings
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -22,16 +23,18 @@ nltk.download("punkt")
 nltk.download("punkt_tab")
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=API_KEY)
+client = genai.Client(api_key=API_KEY)
 
 
 class GeminiEmbeddingFunction(EmbeddingFunction):
     def __call__(self, input: Documents) -> Embeddings:
-        model = "models/text-embedding-004"
-        title = "Custom query"
-        return genai.embed_content(
-            model=model, content=input, task_type="retrieval_document"
-        )["embedding"]
+        model = "text-embedding-004"
+        response = client.models.embed_content(
+            model=model,
+            contents=input,
+            config=types.EmbedContentConfig(task_type="RETRIEVAL_DOCUMENT"),
+        )
+        return [embedding.values for embedding in response.embeddings]
 
 
 def parse_pdf(file_path):
